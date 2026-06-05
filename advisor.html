@@ -545,11 +545,18 @@ Be warm, specific and direct. Speak to this person, not about them.`;
 
         if (!html) html = `<div class="res-body">${text}</div>`;
 
-        // Extract first outfit description from Section 1 for image generation
+        // Extract all 3 outfit descriptions from Section 1
         const sec1Match = text.match(/SECTION\s*1[^\n]*\n([\s\S]*?)(?=SECTION\s*2|$)/i);
         const sec1Text  = sec1Match ? sec1Match[1].trim() : '';
-        const firstOutfitLine = sec1Text.split('\n').find(l => l.trim().length > 20) || sec1Text.slice(0, 250);
-        const outfitDesc = firstOutfitLine.replace(/^[\d\.\-\•]+\s*/, '').trim().slice(0, 280);
+        const outfitParts = sec1Text.split(/Outfit\s*\d+\s*\n?/i).filter(p => p.trim().length > 15);
+        const outfitDescs = outfitParts.slice(0, 3).map(part => {
+          const line = part.split('\n').find(l => l.trim().length > 15) || '';
+          return line.replace(/^[\d\.\-\•]+\s*/, '').trim().slice(0, 280);
+        }).filter(Boolean);
+        if (outfitDescs.length === 0) {
+          const fb = sec1Text.split('\n').find(l => l.trim().length > 20) || '';
+          outfitDescs.push(fb.replace(/^[\d\.\-\•]+\s*/, '').trim().slice(0, 280));
+        }
 
         // Prepend AI Outfit Visualizer placeholder (filled async below)
         html = `<div class="res-sec" id="ai-outfit-section">
@@ -565,7 +572,7 @@ Be warm, specific and direct. Speak to this person, not about them.`;
         document.getElementById('res-content').innerHTML = html;
 
         // Generate AI outfit images in the background (non-blocking)
-        generateOutfitImages(outfitDesc);
+        generateOutfitImages(outfitDescs);
 
         incrementUsed();
         const used = getUsed();
@@ -605,49 +612,60 @@ Be warm, specific and direct. Speak to this person, not about them.`;
       });
     }
 
-    async function generateOutfitImages(outfitDescription) {
+    async function generateOutfitImages(outfitDescriptions) {
       const grid   = document.getElementById('ai-outfit-grid');
       const loader = document.getElementById('ai-outfit-loader');
+      if (!Array.isArray(outfitDescriptions)) outfitDescriptions = [outfitDescriptions];
 
-      try {
-        const res = await fetch('/.netlify/functions/generate-outfit-image', {
+      const basePayload = {
+        gender:    cv['g-gender'] || 'person',
+        bodyShape: cv['g-body']   || '',
+        skinTone:  skinVal        || '',
+        hairColor: cv['g-hc']     || '',
+        hairStyle: cv['g-hs']     || '',
+        ageRange:  document.getElementById('sa-age').value || '',
+        occasion:  cv['g-occ']   || 'casual',
+      };
+
+      // Show shimmer placeholders while generating
+      if (loader) loader.style.display = 'none';
+      grid.innerHTML = outfitDescriptions.map((_, i) =>
+        `<div class="ai-outfit-shimmer" id="shimmer-${i}"></div>`
+      ).join('');
+
+      // Generate all images in parallel
+      const promises = outfitDescriptions.map((outfitDescription, i) =>
+        fetch('/.netlify/functions/generate-outfit-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            gender:           cv['g-gender']  || 'person',
-            bodyShape:        cv['g-body']    || '',
-            skinTone:         skinVal         || '',
-            hairColor:        cv['g-hc']      || '',
-            hairStyle:        cv['g-hs']      || '',
-            ageRange:         document.getElementById('sa-age').value || '',
-            occasion:         cv['g-occ']     || 'casual',
-            outfitDescription,
-          })
-        });
+          body: JSON.stringify({ ...basePayload, outfitDescription })
+        })
+        .then(r => r.json())
+        .then(data => {
+          // Replace shimmer with image as each one completes
+          const shimmer = document.getElementById(`shimmer-${i}`);
+          if (data.images && data.images.length > 0) {
+            const img = data.images[0];
+            const div = document.createElement('div');
+            div.className = 'ai-outfit-img-wrap';
+            div.innerHTML = `
+              <img src="data:${img.mimeType};base64,${img.base64}" alt="Outfit ${i+1}" />
+              <span class="ai-badge">Outfit ${i+1}</span>`;
+            if (shimmer) shimmer.replaceWith(div);
+          } else {
+            if (shimmer) shimmer.remove();
+          }
+        })
+        .catch(() => {
+          const shimmer = document.getElementById(`shimmer-${i}`);
+          if (shimmer) shimmer.remove();
+        })
+      );
 
-        const data = await res.json();
-        if (loader) loader.style.display = 'none';
-
-        if (data.images && data.images.length > 0) {
-          const img = data.images[0];
-          grid.innerHTML = `
-            <div class="ai-outfit-img-wrap" style="grid-column:1/-1;max-width:340px;margin:0 auto;">
-              <img
-                src="data:${img.mimeType};base64,${img.base64}"
-                alt="AI generated outfit"
-              />
-              <span class="ai-badge">✨ AI Generated</span>
-            </div>`;
-        } else {
-          throw new Error(data.error || 'No image returned');
-        }
-
-      } catch (e) {
-        console.warn('AI outfit generation failed:', e.message);
-        const grid   = document.getElementById('ai-outfit-grid');
-        const loader = document.getElementById('ai-outfit-loader');
-        if (loader) loader.style.display = 'none';
-        if (grid) grid.innerHTML = `<p style="font-size:12px;color:#c0392b;padding:8px 0;">⚠️ ${e.message}</p>`;
+      await Promise.allSettled(promises);
+      if (grid.children.length === 0) {
+        const sec = document.getElementById('ai-outfit-section');
+        if (sec) sec.style.display = 'none';
       }
     }
 

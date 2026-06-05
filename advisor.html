@@ -572,7 +572,14 @@ Be warm, specific and direct. Speak to this person, not about them.`;
         document.getElementById('res-content').innerHTML = html;
 
         // Generate AI outfit images in the background (non-blocking)
-        generateOutfitImages(outfitDescs);
+        // Compress photo if uploaded, then pass to generator
+        if (photoB64) {
+          compressPhoto(photoB64, photoType || 'image/jpeg').then(compressed => {
+            generateOutfitImages(outfitDescs, compressed.data, compressed.mime);
+          });
+        } else {
+          generateOutfitImages(outfitDescs, null, null);
+        }
 
         incrementUsed();
         const used = getUsed();
@@ -612,19 +619,27 @@ Be warm, specific and direct. Speak to this person, not about them.`;
       });
     }
 
-    async function generateOutfitImages(outfitDescriptions) {
+    async function generateOutfitImages(outfitDescriptions, photoBase64, photoMimeType) {
       const grid   = document.getElementById('ai-outfit-grid');
       const loader = document.getElementById('ai-outfit-loader');
       if (!Array.isArray(outfitDescriptions)) outfitDescriptions = [outfitDescriptions];
 
+      // Update subtitle based on whether photo was uploaded
+      const subtitle = document.querySelector('#ai-outfit-section p');
+      if (subtitle && photoBase64) {
+        subtitle.innerHTML = 'Showing <strong>you</strong> in each recommended outfit — face &amp; hair preserved';
+      }
+
       const basePayload = {
-        gender:    cv['g-gender'] || 'person',
-        bodyShape: cv['g-body']   || '',
-        skinTone:  skinVal        || '',
-        hairColor: cv['g-hc']     || '',
-        hairStyle: cv['g-hs']     || '',
-        ageRange:  document.getElementById('sa-age').value || '',
-        occasion:  cv['g-occ']   || 'casual',
+        gender:       cv['g-gender'] || 'person',
+        bodyShape:    cv['g-body']   || '',
+        skinTone:     skinVal        || '',
+        hairColor:    cv['g-hc']     || '',
+        hairStyle:    cv['g-hs']     || '',
+        ageRange:     document.getElementById('sa-age').value || '',
+        occasion:     cv['g-occ']   || 'casual',
+        photoBase64:  photoBase64   || null,
+        photoMimeType: photoMimeType || null,
       };
 
       // Show shimmer placeholders while generating

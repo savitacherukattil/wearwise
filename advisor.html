@@ -610,40 +610,46 @@ Be warm, specific and direct. Speak to this person, not about them.`;
       const loader = document.getElementById('ai-outfit-loader');
 
       try {
-        // Build detailed fashion prompt from user's profile
-        const gender = (cv['g-gender'] || 'person').toLowerCase().replace('non-binary', 'person');
-        const shape  = cv['g-body']  ? cv['g-body'].toLowerCase() + ' body type' : '';
-        const skin   = skinVal       ? skinVal.toLowerCase() + ' complexion' : '';
-        const hair   = [cv['g-hc'], cv['g-hs']].filter(Boolean).map(s => s.toLowerCase()).join(' ') + (cv['g-hc'] ? ' hair' : '');
-        const age    = document.getElementById('sa-age').value || '';
-        const occ    = (cv['g-occ'] || 'casual').split('/')[0].trim().toLowerCase();
-        const outfit = outfitDescription || 'stylish contemporary outfit';
+        const res = await fetch('/.netlify/functions/generate-outfit-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            gender:           cv['g-gender']  || 'person',
+            bodyShape:        cv['g-body']    || '',
+            skinTone:         skinVal         || '',
+            hairColor:        cv['g-hc']      || '',
+            hairStyle:        cv['g-hs']      || '',
+            ageRange:         document.getElementById('sa-age').value || '',
+            occasion:         cv['g-occ']     || 'casual',
+            outfitDescription,
+          })
+        });
 
-        const personDesc = [shape, skin, hair, age].filter(Boolean).join(', ');
-        const prompt = `Professional fashion editorial photograph, full body portrait of a ${gender}${personDesc ? ', ' + personDesc : ''}, wearing ${outfit}, ${occ} occasion, soft studio lighting, clean neutral background, fashion magazine quality, sharp focus, detailed clothing textures, natural confident pose`;
-
-        const seed     = Math.floor(Math.random() * 999999);
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=1024&nologo=true&seed=${seed}`;
-
+        const data = await res.json();
         if (loader) loader.style.display = 'none';
 
-        // Pollinations streams the image directly — set as img src, no API key needed
-        grid.innerHTML = `
-          <div class="ai-outfit-img-wrap" style="grid-column:1/-1;max-width:340px;margin:0 auto;">
-            <img
-              src="${imageUrl}"
-              alt="AI generated outfit"
-              onload="this.style.opacity=1"
-              onerror="document.getElementById('ai-outfit-section').style.display='none'"
-              style="opacity:0;transition:opacity 0.5s;"
-            />
-            <span class="ai-badge">✨ AI Generated</span>
-          </div>`;
+        if (data.images && data.images.length > 0) {
+          const img = data.images[0];
+          grid.innerHTML = `
+            <div class="ai-outfit-img-wrap" style="grid-column:1/-1;max-width:340px;margin:0 auto;">
+              <img
+                src="data:${img.mimeType};base64,${img.base64}"
+                alt="AI generated outfit"
+                style="opacity:0;transition:opacity 0.5s;"
+                onload="this.style.opacity=1"
+              />
+              <span class="ai-badge">✨ AI Generated</span>
+            </div>`;
+        } else {
+          throw new Error(data.error || 'No image returned');
+        }
 
       } catch (e) {
         console.warn('AI outfit generation failed:', e.message);
-        const sec = document.getElementById('ai-outfit-section');
-        if (sec) sec.style.display = 'none';
+        const grid   = document.getElementById('ai-outfit-grid');
+        const loader = document.getElementById('ai-outfit-loader');
+        if (loader) loader.style.display = 'none';
+        if (grid) grid.innerHTML = `<p style="font-size:12px;color:#c0392b;padding:8px 0;">⚠️ ${e.message}</p>`;
       }
     }
 

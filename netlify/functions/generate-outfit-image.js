@@ -1,6 +1,8 @@
 const https = require('https');
 exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
+  const token = process.env.HF_TOKEN;
+  if (!token) return { statusCode: 500, headers: {'Content-Type':'application/json'}, body: JSON.stringify({ error: 'HF_TOKEN not set in Netlify env vars.' }) };
   let p;
   try { p = JSON.parse(event.body || '{}'); } catch { return { statusCode: 400, body: 'Bad request' }; }
   const g = (p.gender || 'person').toLowerCase();
@@ -8,21 +10,25 @@ exports.handler = async function(event) {
   const skin = p.skinTone || '';
   const occ = (p.occasion || 'casual').split('/')[0].trim().toLowerCase();
   const outfit = p.outfitDescription || 'stylish outfit';
-  const prompt = `Fashion editorial photograph, full body portrait of a ${g}${shape ? ', ' + shape : ''}${skin ? ', ' + skin + ' skin' : ''}, wearing ${outfit}, ${occ} occasion, studio lighting, clean background, high quality`.replace(/\s+/g, ' ').trim();
-  const seed = Math.floor(Math.random() * 999999);
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=1024&nologo=true&seed=${seed}`;
+  const prompt = `Fashion editorial photograph, full body portrait of a ${g}${shape ? ', ' + shape : ''}${skin ? ', ' + skin + ' skin' : ''}, wearing ${outfit}, ${occ} occasion, studio lighting, clean background, high quality photo`.replace(/\s+/g, ' ').trim();
   try {
     const buf = await new Promise((resolve, reject) => {
-      function get(u, r) {
-        https.get(u, res => {
-          if ((res.statusCode === 301 || res.statusCode === 302) && r > 0) return get(res.headers.location, r - 1);
-          const c = [];
-          res.on('data', d => c.push(d));
-          res.on('end', () => resolve(Buffer.concat(c)));
-          res.on('error', reject);
-        }).on('error', reject);
-      }
-      get(url, 3);
+      const body = JSON.stringify({ inputs: prompt });
+      const options = {
+        hostname: 'api-inference.huggingface.co',
+        path: '/models/black-forest-labs/FLUX.1-schnell',
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+      };
+      const req = https.request(options, res => {
+        const chunks = [];
+        res.on('data', d => chunks.push(d));
+        res.on('end', () => resolve(Buffer.concat(chunks)));
+        res.on('error', reject);
+      });
+      req.on('error', reject);
+      req.write(body);
+      req.end();
     });
     return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ images: [{ base64: buf.toString('base64'), mimeType: 'image/jpeg' }] }) };
   } catch (e) {

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upgrade to Pro — WearWise</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👗</text></svg>" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- Stripe.js — official Stripe library, loads securely from Stripe's servers -->
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="logo">Wear<span>Wise</span></a>
+      <div class="nav-links">
+        <a href="advisor.html">← Back to advisor</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="checkout-wrap">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <div style="font-size:11px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:#3b6d11;margin-bottom:8px;">One upgrade. Infinite great outfits.</div>
+      <h1 style="font-size:clamp(26px,5vw,38px);margin-bottom:8px;">Upgrade to WearWise Pro</h1>
+      <p style="color:#888;font-size:14px;">Unlimited style reports. Save & download as PDF. Priority AI. Cancel anytime.</p>
+    </div>
+
+    <!-- WHAT YOU GET -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem;">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#444;"><i class="ti ti-check" style="color:#3b6d11;"></i> Unlimited style reports</div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#444;"><i class="ti ti-check" style="color:#3b6d11;"></i> Photo upload analysis</div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#444;"><i class="ti ti-check" style="color:#3b6d11;"></i> All 7 advice sections</div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#444;"><i class="ti ti-check" style="color:#3b6d11;"></i> Save & download PDF</div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#444;"><i class="ti ti-check" style="color:#3b6d11;"></i> Priority AI (faster)</div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#444;"><i class="ti ti-check" style="color:#3b6d11;"></i> Cancel anytime</div>
+    </div>
+
+    <div class="checkout-card">
+      <div class="checkout-plan">
+        <div>
+          <div class="plan-label">WearWise Pro — Monthly</div>
+          <div class="plan-val">AED 15 <span style="font-size:14px;color:#888;font-family:'DM Sans',sans-serif;">/ month</span></div>
+        </div>
+        <i class="ti ti-crown" style="font-size:28px;color:#8b5e3c;"></i>
+      </div>
+
+      <!-- PAYMENT FORM -->
+      <div id="payment-form-wrap">
+        <form id="stripe-form">
+          <div class="field-group">
+            <label class="lbl">Full name</label>
+            <input type="text" id="cardholder-name" placeholder="Your full name" required />
+          </div>
+          <div class="field-group">
+            <label class="lbl">Email address</label>
+            <input type="email" id="cardholder-email" placeholder="your@email.com" required />
+          </div>
+          <div class="field-group">
+            <label class="lbl">Card details</label>
+            <div id="card-element"></div>
+            <div id="card-errors" role="alert"></div>
+          </div>
+          <button type="submit" class="btn-primary" style="width:100%;justify-content:center;margin-top:8px;" id="pay-btn">
+            <i class="ti ti-lock"></i> Pay AED 15 / month
+          </button>
+        </form>
+
+        <div class="stripe-badge">
+          <i class="ti ti-shield-check"></i>
+          Secured by Stripe · Your card details never touch our servers
+        </div>
+
+        <p style="text-align:center;font-size:12px;color:#aaa;margin-top:10px;">
+          By subscribing you agree to our <a href="terms.html" style="color:#8b5e3c;">terms of use</a>. Cancel anytime from your account.
+        </p>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div id="payment-success">
+        <i class="ti ti-circle-check"></i>
+        <h2>Welcome to WearWise Pro!</h2>
+        <p>Your subscription is active. You now have unlimited style reports, PDF downloads and priority AI.</p>
+        <a href="advisor.html" class="btn-primary" style="display:inline-flex;">Start your style report <i class="ti ti-arrow-right"></i></a>
+      </div>
+    </div>
+
+    <!-- TRUST SIGNALS -->
+    <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-top:1.5rem;">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888;"><i class="ti ti-lock" style="color:#3b6d11;"></i> 256-bit SSL</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888;"><i class="ti ti-refresh" style="color:#3b6d11;"></i> Cancel anytime</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888;"><i class="ti ti-heart" style="color:#3b6d11;"></i> No hidden fees</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888;"><i class="ti ti-shield" style="color:#3b6d11;"></i> Stripe protected</div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // STRIPE SETUP
+    // Replace 'pk_test_...' with your actual Stripe Publishable Key
+    // Get it from: https://dashboard.stripe.com/apikeys
+    // ============================================================
+    const STRIPE_PK = 'pk_test_YOUR_STRIPE_PUBLISHABLE_KEY_HERE';
+    const stripe = Stripe(STRIPE_PK);
+    const elements = stripe.elements();
+
+    const cardElement = elements.create('card', {
+      style: {
+        base: {
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: '15px',
+          color: '#1a1a1a',
+          '::placeholder': { color: '#bbb' }
+        },
+        invalid: { color: '#c0392b' }
+      }
+    });
+    cardElement.mount('#card-element');
+
+    cardElement.on('change', ({ error }) => {
+      document.getElementById('card-errors').textContent = error ? error.message : '';
+    });
+
+    document.getElementById('stripe-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('pay-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="ti ti-loader"></i> Processing...';
+
+      const name = document.getElementById('cardholder-name').value;
+      const email = document.getElementById('cardholder-email').value;
+
+      // ============================================================
+      // PAYMENT FLOW EXPLANATION (for your developer or Netlify Function):
+      //
+      // For a real subscription:
+      // 1. Your backend (Netlify Function) creates a Stripe Customer + Subscription
+      // 2. Stripe returns a client_secret
+      // 3. You call stripe.confirmCardPayment(clientSecret, ...) here
+      //
+      // For a one-time payment (simpler to start with):
+      // 1. Backend creates a PaymentIntent
+      // 2. Returns client_secret
+      // 3. Confirm here
+      //
+      // The code below simulates a successful payment for demo/testing.
+      // Replace the block marked REPLACE WITH REAL API CALL with your actual backend call.
+      // ============================================================
+
+      try {
+        // --- REPLACE WITH REAL API CALL TO YOUR NETLIFY FUNCTION ---
+        // const res = await fetch('/.netlify/functions/create-payment', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({ name, email, priceId: 'price_YOUR_STRIPE_PRICE_ID' })
+        // });
+        // const { clientSecret } = await res.json();
+        // const result = await stripe.confirmCardPayment(clientSecret, {
+        //   payment_method: { card: cardElement, billing_details: { name, email } }
+        // });
+        // if (result.error) throw new Error(result.error.message);
+        // --- END REPLACE ---
+
+        // DEMO: simulate success (remove this in production)
+        await new Promise(r => setTimeout(r, 1500));
+        onPaymentSuccess();
+
+      } catch (err) {
+        document.getElementById('card-errors').textContent = err.message;
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ti ti-lock"></i> Pay AED 15 / month';
+      }
+    });
+
+    function onPaymentSuccess() {
+      // Mark user as Pro in localStorage
+      localStorage.setItem('wearwise_pro', 'true');
+      // Show success state
+      document.getElementById('payment-form-wrap').style.display = 'none';
+      document.getElementById('payment-success').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Style Advisor — WearWise</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👗</text></svg>" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="logo">Wear<span>Wise</span></a>
+      <div class="nav-links">
+        <a href="index.html#pricing">Pricing</a>
+        <a href="checkout.html" class="btn-nav">Upgrade to Pro <i class="ti ti-crown"></i></a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="advisor-wrap">
+    <div class="advisor-hero">
+      <div style="font-size:11px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:#3b6d11;margin-bottom:8px;">AI Style Advisor — WearWise</div>
+      <h1 style="font-size:clamp(26px,5vw,38px);margin-bottom:8px;">Wear It Right. Waste Nothing.</h1>
+      <p style="font-size:14px;color:#888;margin-bottom:0;">Upload your photo, answer a few quick questions — get a full personalised style report.</p>
+      <div class="save-banner" style="margin-top:14px;">
+        <i class="ti ti-alert-circle" style="font-size:18px;color:#854f0b;flex-shrink:0;"></i>
+        <span>The average shopper spends <strong>AED 2,000+</strong> per year on clothes they never wear. This report tells you exactly what to buy so every purchase is one you'll love.</span>
+      </div>
+    </div>
+
+    <!-- FREE TIER INDICATOR -->
+    <div id="free-banner" class="free-limit-banner" style="display:none;">
+      <p id="free-banner-text">You have used 2 of 3 free reports this month.</p>
+      <a href="checkout.html">Get unlimited <i class="ti ti-crown"></i></a>
+    </div>
+
+    <div id="main-form">
+      <!-- PROGRESS BAR -->
+      <div class="prog-bar" id="prog">
+        <div class="prog-step cur" id="ps1">1. Photo</div>
+        <div class="prog-step" id="ps2">2. Body & look</div>
+        <div class="prog-step" id="ps3">3. Occasion</div>
+        <div class="prog-step" id="ps4">4. Your report</div>
+      </div>
+
+      <!-- STEP 1: PHOTO -->
+      <div class="step-page active" id="page1">
+        <div class="form-card">
+          <div class="sec-title"><i class="ti ti-camera"></i> Upload your photo</div>
+          <div class="photo-zone" id="photo-zone" onclick="document.getElementById('photo-input').click()">
+            <i class="ti ti-cloud-upload"></i>
+            <p class="pz-title">Tap to upload your photo</p>
+            <p>Full-body or face photo works best. JPG or PNG. Optional but improves accuracy.</p>
+            <img id="photo-preview" src="" alt="Uploaded photo preview" />
+          </div>
+          <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handlePhoto(this)" />
+          <p class="privacy-note"><i class="ti ti-lock" style="font-size:12px;"></i> Your photo is never stored or shared. Used only in this session.</p>
+        </div>
+        <button class="cta-btn primary" onclick="goStep(2)" style="width:100%;margin-top:8px;">Continue <i class="ti ti-arrow-right"></i></button>
+        <p style="text-align:center;font-size:12px;color:#bbb;margin-top:8px;">No photo? That's fine — skip and continue.</p>
+      </div>
+
+      <!-- STEP 2: BODY & LOOK -->
+      <div class="step-page" id="page2">
+        <div class="form-card">
+          <div class="sec-title"><i class="ti ti-ruler-measure"></i> Body & measurements</div>
+          <div class="g2" style="margin-bottom:14px;">
+            <div><label class="lbl">Height (cm)</label><input type="number" id="ht" placeholder="e.g. 162" min="130" max="220" /></div>
+            <div><label class="lbl">Weight (kg)</label><input type="number" id="wt" placeholder="e.g. 60" min="30" max="200" /></div>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label class="lbl">Body shape</label>
+            <div class="chips" id="g-body">
+              <button class="chip" onclick="pick('g-body',this)">Hourglass</button>
+              <button class="chip" onclick="pick('g-body',this)">Pear / Triangle</button>
+              <button class="chip" onclick="pick('g-body',this)">Apple / Round</button>
+              <button class="chip" onclick="pick('g-body',this)">Rectangle / Athletic</button>
+              <button class="chip" onclick="pick('g-body',this)">Inverted triangle</button>
+              <button class="chip" onclick="pick('g-body',this)">Plus size / Curvy</button>
+              <button class="chip" onclick="pick('g-body',this)">Petite / Slim</button>
+            </div>
+          </div>
+          <div class="g2">
+            <div>
+              <label class="lbl">I identify as</label>
+              <div class="chips" id="g-gender">
+                <button class="chip" onclick="pick('g-gender',this)">Woman</button>
+                <button class="chip" onclick="pick('g-gender',this)">Man</button>
+                <button class="chip" onclick="pick('g-gender',this)">Non-binary</button>
+              </div>
+            </div>
+            <div>
+              <label class="lbl">Age range</label>
+              <select id="sa-age">
+                <option value="">Select...</option>
+                <option>Under 18</option><option>18–24</option><option>25–34</option>
+                <option>35–44</option><option>45–54</option><option>55–64</option><option>65+</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="sec-title"><i class="ti ti-droplet"></i> Skin tone — tap your shade</div>
+          <div class="swatch-row" id="g-skin">
+            <div class="sw" style="background:#FDDBB4;" onclick="pickSw(this,'Fair / Ivory')" title="Fair / Ivory"></div>
+            <div class="sw" style="background:#E8B98A;" onclick="pickSw(this,'Light / Beige')" title="Light / Beige"></div>
+            <div class="sw" style="background:#D49A6A;" onclick="pickSw(this,'Medium / Olive')" title="Medium / Olive"></div>
+            <div class="sw" style="background:#B07A45;" onclick="pickSw(this,'Tan / Caramel')" title="Tan / Caramel"></div>
+            <div class="sw" style="background:#8B5E3C;" onclick="pickSw(this,'Brown')" title="Brown"></div>
+            <div class="sw" style="background:#4A2C1A;" onclick="pickSw(this,'Deep / Ebony')" title="Deep / Ebony"></div>
+            <span class="skin-lbl" id="skin-lbl">Tap a shade</span>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="sec-title"><i class="ti ti-scissors"></i> Hair</div>
+          <div class="g2">
+            <div>
+              <label class="lbl">Hair colour</label>
+              <div class="chips" id="g-hc">
+                <button class="chip" onclick="pick('g-hc',this)">Black</button>
+                <button class="chip" onclick="pick('g-hc',this)">Brown</button>
+                <button class="chip" onclick="pick('g-hc',this)">Blonde</button>
+                <button class="chip" onclick="pick('g-hc',this)">Red</button>
+                <button class="chip" onclick="pick('g-hc',this)">Grey / Silver</button>
+                <button class="chip" onclick="pick('g-hc',this)">Dyed / Coloured</button>
+              </div>
+            </div>
+            <div>
+              <label class="lbl">Hair style</label>
+              <div class="chips" id="g-hs">
+                <button class="chip" onclick="pick('g-hs',this)">Short</button>
+                <button class="chip" onclick="pick('g-hs',this)">Medium</button>
+                <button class="chip" onclick="pick('g-hs',this)">Long</button>
+                <button class="chip" onclick="pick('g-hs',this)">Curly / Wavy</button>
+                <button class="chip" onclick="pick('g-hs',this)">Braids / Locs</button>
+                <button class="chip" onclick="pick('g-hs',this)">Hijab / Head covering</button>
+                <button class="chip" onclick="pick('g-hs',this)">Bald / Shaved</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-row">
+          <button class="cta-btn" onclick="goStep(1)" style="flex:0.35;">← Back</button>
+          <button class="cta-btn primary" onclick="goStep(3)">Continue <i class="ti ti-arrow-right"></i></button>
+        </div>
+      </div>
+
+      <!-- STEP 3: OCCASION -->
+      <div class="step-page" id="page3">
+        <div class="form-card">
+          <div class="sec-title"><i class="ti ti-calendar-event"></i> Occasion & style preference</div>
+          <div style="margin-bottom:14px;">
+            <label class="lbl">What's this outfit for?</label>
+            <div class="chips" id="g-occ">
+              <button class="chip" onclick="pick('g-occ',this)">Everyday / Casual</button>
+              <button class="chip" onclick="pick('g-occ',this)">Work / Office</button>
+              <button class="chip" onclick="pick('g-occ',this)">Formal / Gala</button>
+              <button class="chip" onclick="pick('g-occ',this)">Date night</button>
+              <button class="chip" onclick="pick('g-occ',this)">Wedding / Party</button>
+              <button class="chip" onclick="pick('g-occ',this)">Beach / Holiday</button>
+              <button class="chip" onclick="pick('g-occ',this)">Festival / Cultural event</button>
+              <button class="chip" onclick="pick('g-occ',this)">Religious / Modest wear</button>
+            </div>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label class="lbl">Style preference</label>
+            <div class="chips" id="g-style">
+              <button class="chip" onclick="pick('g-style',this)">Western / Contemporary</button>
+              <button class="chip" onclick="pick('g-style',this)">Indian traditional (saree, kurta, lehenga)</button>
+              <button class="chip" onclick="pick('g-style',this)">Arab / Modest (abaya, thobe, jalabiya)</button>
+              <button class="chip" onclick="pick('g-style',this)">Indo-western fusion</button>
+              <button class="chip" onclick="pick('g-style',this)">Smart casual</button>
+              <button class="chip" onclick="pick('g-style',this)">Streetwear / Urban</button>
+              <button class="chip" onclick="pick('g-style',this)">Minimalist</button>
+              <button class="chip" onclick="pick('g-style',this)">Bold & expressive</button>
+            </div>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label class="lbl">Advice categories (tick all you want)</label>
+            <div class="chips" id="g-cats">
+              <button class="chip" onclick="toggleCat(this)">Clothing</button>
+              <button class="chip" onclick="toggleCat(this)">Jewellery & accessories</button>
+              <button class="chip" onclick="toggleCat(this)">Hair accessories</button>
+              <button class="chip" onclick="toggleCat(this)">Footwear</button>
+              <button class="chip" onclick="toggleCat(this)">Bags & handbags</button>
+              <button class="chip" onclick="toggleCat(this)">Watches</button>
+              <button class="chip" onclick="toggleCat(this)">Makeup colours</button>
+              <button class="chip" onclick="toggleCat(this)">Fragrance type</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="sec-title"><i class="ti ti-currency-dollar"></i> Budget & comfort</div>
+          <div class="g2">
+            <div>
+              <label class="lbl">Budget</label>
+              <div class="chips" id="g-budget">
+                <button class="chip" onclick="pick('g-budget',this)">Budget (under AED 100)</button>
+                <button class="chip" onclick="pick('g-budget',this)">Mid-range (AED 100–500)</button>
+                <button class="chip" onclick="pick('g-budget',this)">Premium (AED 500–2000)</button>
+                <button class="chip" onclick="pick('g-budget',this)">Luxury (AED 2000+)</button>
+              </div>
+            </div>
+            <div>
+              <label class="lbl">Climate</label>
+              <div class="chips" id="g-climate">
+                <button class="chip" onclick="pick('g-climate',this)">Hot & humid (UAE / Gulf)</button>
+                <button class="chip" onclick="pick('g-climate',this)">Mostly air-conditioned</button>
+                <button class="chip" onclick="pick('g-climate',this)">Mild / Temperate</button>
+                <button class="chip" onclick="pick('g-climate',this)">Cold / Winter</button>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:14px;">
+            <label class="lbl">Any extra notes? (wide feet, prefer loose, hide tummy, sensitive skin, etc.)</label>
+            <textarea id="extra" rows="2" placeholder="e.g. I have wide feet. I prefer loose-fitting tops."></textarea>
+          </div>
+        </div>
+
+        <div class="nav-row">
+          <button class="cta-btn" onclick="goStep(2)" style="flex:0.35;">← Back</button>
+          <button class="cta-btn primary" onclick="getAdvice()"><i class="ti ti-sparkles"></i> Get my style report ↗</button>
+        </div>
+      </div>
+    </div><!-- end main-form -->
+
+    <!-- LOADING -->
+    <div class="loading-wrap" id="loading">
+      <i class="ti ti-shirt" style="font-size:36px;color:#bbb;margin-bottom:12px;display:block;"></i>
+      <p style="font-size:14px;color:#888;margin-bottom:14px;">Your AI stylist is reviewing your profile...<br><span style="font-size:12px;color:#bbb;">This takes about 15–20 seconds</span></p>
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results-wrap" id="results">
+      <div class="money-banner">
+        <i class="ti ti-pig-money" style="font-size:32px;color:#3b6d11;flex-shrink:0;"></i>
+        <div>
+          <h2 style="font-family:'Cormorant Garamond',serif;">Smart shopping activated</h2>
+          <p>Every recommendation below is chosen for your specific body, colouring & occasion.</p>
+        </div>
+      </div>
+
+      <div id="upsell-banner" class="free-limit-banner" style="display:none;">
+        <p>You've used all 3 free reports. <strong>Upgrade to Pro</strong> for unlimited reports.</p>
+        <a href="checkout.html">Upgrade — AED 15/mo <i class="ti ti-crown"></i></a>
+      </div>
+
+      <div class="res-card">
+        <div id="res-content"></div>
+        <div class="divider"></div>
+        <div class="shop-head"><i class="ti ti-shopping-bag" style="font-size:13px;"></i> Shop these looks — best prices</div>
+        <div class="shop-filters" id="shop-filters">
+          <button class="shop-filter on" onclick="filterShops('all',this)">All stores</button>
+          <button class="shop-filter" onclick="filterShops('budget',this)">Budget</button>
+          <button class="shop-filter" onclick="filterShops('mid',this)">Mid-range</button>
+          <button class="shop-filter" onclick="filterShops('premium',this)">Premium / UAE</button>
+          <button class="shop-filter" onclick="filterShops('indian',this)">Indian fashion</button>
+          <button class="shop-filter" onclick="filterShops('accessories',this)">Accessories</button>
+        </div>
+        <div class="shop-grid" id="shop-grid"></div>
+        <p class="aff-note"><i class="ti ti-info-circle" style="font-size:12px;"></i> Links may include affiliate commissions — this never affects our advice. Always shop at the best price for you.</p>
+        <button class="reset-link" onclick="resetAll()">← Start a new style profile</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const cv = {};
+    let skinVal = '';
+    let photoB64 = '';
+    let photoType = '';
+    let selCats = new Set();
+    const FREE_LIMIT = 999; // ⚠️ TESTING ONLY — change back to 3 before going live
+    const STORAGE_KEY = 'wearwise_reports_used';
+    const MONTH_KEY = 'wearwise_month';
+
+    function getUsed() {
+      const now = new Date();
+      const monthStr = now.getFullYear() + '-' + now.getMonth();
+      const stored = localStorage.getItem(MONTH_KEY);
+      if (stored !== monthStr) {
+        localStorage.setItem(MONTH_KEY, monthStr);
+        localStorage.setItem(STORAGE_KEY, '0');
+        return 0;
+      }
+      return parseInt(localStorage.getItem(STORAGE_KEY) || '0');
+    }
+
+    function incrementUsed() {
+      const used = getUsed();
+      localStorage.setItem(STORAGE_KEY, String(used + 1));
+    }
+
+    function isPro() {
+      return localStorage.getItem('wearwise_pro') === 'true';
+    }
+
+    function initFreeBanner() {
+      if (isPro()) return;
+      const used = getUsed();
+      const remaining = FREE_LIMIT - used;
+      const banner = document.getElementById('free-banner');
+      if (remaining <= 2 && remaining > 0) {
+        banner.style.display = 'flex';
+        document.getElementById('free-banner-text').textContent =
+          `You have ${remaining} free report${remaining === 1 ? '' : 's'} left this month.`;
+      } else if (remaining <= 0) {
+        banner.style.display = 'flex';
+        document.getElementById('free-banner-text').textContent = 'You have used all 3 free reports this month.';
+      }
+    }
+
+    initFreeBanner();
+
+    function pick(g, btn) {
+      document.querySelectorAll('#' + g + ' .chip').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      cv[g] = btn.textContent.trim();
+    }
+
+    function toggleCat(btn) {
+      btn.classList.toggle('on');
+      selCats = new Set([...document.querySelectorAll('#g-cats .chip.on')].map(b => b.textContent.trim()));
+    }
+
+    function pickSw(el, lbl) {
+      document.querySelectorAll('#g-skin .sw').forEach(s => s.classList.remove('on'));
+      el.classList.add('on');
+      skinVal = lbl;
+      document.getElementById('skin-lbl').textContent = lbl;
+    }
+
+    function handlePhoto(input) {
+      const file = input.files[0];
+      if (!file) return;
+      photoType = file.type;
+      const reader = new FileReader();
+      reader.onload = e => {
+        photoB64 = e.target.result.split(',')[1];
+        const prev = document.getElementById('photo-preview');
+        prev.src = e.target.result;
+        prev.style.display = 'block';
+        document.querySelector('.pz-title').textContent = 'Photo uploaded ✓';
+        document.querySelector('.photo-zone > p').textContent = 'Great! Continue to the next step.';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function goStep(n) {
+      for (let i = 1; i <= 4; i++) {
+        const pg = document.getElementById('page' + i);
+        if (pg) pg.className = 'step-page' + (i === n ? ' active' : '');
+        const ps = document.getElementById('ps' + i);
+        if (ps) ps.className = 'prog-step' + (i === n ? ' cur' : i < n ? ' done' : '');
+      }
+    }
+
+    const ALL_SHOPS = [
+      { name: 'Shein', url: 'https://www.shein.com', icon: '💜', cat: 'budget', badge: 'Ultra budget' },
+      { name: 'Max Fashion', url: 'https://www.maxfashion.com/ae', icon: '🏷️', cat: 'budget', badge: 'Value pick' },
+      { name: 'Centrepoint UAE', url: 'https://www.centrepointstores.com/ae', icon: '🎯', cat: 'budget mid', badge: 'Budget friendly' },
+      { name: 'H&M UAE', url: 'https://www2.hm.com/en_ae', icon: '🍃', cat: 'budget mid', badge: 'Classic basics' },
+      { name: 'Amazon Fashion AE', url: 'https://www.amazon.ae/s?k=clothing+fashion', icon: '📦', cat: 'budget mid', badge: 'Fast delivery' },
+      { name: 'Namshi UAE', url: 'https://en.namshi.com', icon: '🛍️', cat: 'mid premium', badge: 'UAE favourite' },
+      { name: '6th Street UAE', url: 'https://en.6thstreet.com', icon: '👟', cat: 'mid accessories', badge: 'Shoes & bags' },
+      { name: 'Zara UAE', url: 'https://www.zara.com/ae', icon: '⚫', cat: 'mid', badge: 'Trending' },
+      { name: 'ASOS', url: 'https://www.asos.com', icon: '🧥', cat: 'mid', badge: 'Wide range' },
+      { name: 'Accessorize UAE', url: 'https://ae.accessorize.com', icon: '💍', cat: 'mid accessories', badge: 'Jewellery & bags' },
+      { name: 'Ounass (Luxury)', url: 'https://www.ounass.ae', icon: '💎', cat: 'premium', badge: 'UAE luxury' },
+      { name: 'NET-A-PORTER AE', url: 'https://www.net-a-porter.com/en-ae', icon: '🖤', cat: 'premium', badge: 'Designer' },
+      { name: 'Myntra', url: 'https://www.myntra.com', icon: '🌸', cat: 'indian mid', badge: 'Indian fashion' },
+      { name: 'Utsav Fashion', url: 'https://www.utsavfashion.com', icon: '🎪', cat: 'indian', badge: 'Traditional wear' },
+      { name: 'Kalki Fashion', url: 'https://www.kalkifashion.com', icon: '🪷', cat: 'indian premium', badge: 'Ethnic & bridal' },
+      { name: 'Mirraw', url: 'https://www.mirraw.com', icon: '🌺', cat: 'indian budget', badge: 'Affordable ethnic' },
+    ];
+
+    let curFilter = 'all';
+
+    function filterShops(f, btn) {
+      curFilter = f;
+      document.querySelectorAll('.shop-filter').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      renderShops();
+    }
+
+    function buildAffLink(baseUrl, store) {
+      // Replace these with your actual affiliate IDs once approved
+      const affParams = {
+        'shein.com': '?aff_id=YOUR_SHEIN_AFF_ID',
+        'namshi.com': '?utm_source=wearwise&utm_medium=affiliate',
+        'amazon.ae': '&tag=wearwise-21',
+        'asos.com': '?affid=YOUR_ASOS_ID',
+        'myntra.com': '?utm_source=wearwise',
+        'ounass.ae': '?utm_source=wearwise',
+      };
+      for (const domain in affParams) {
+        if (baseUrl.includes(domain)) return baseUrl + affParams[domain];
+      }
+      return baseUrl + '?utm_source=wearwise';
+    }
+
+    function renderShops() {
+      const filtered = ALL_SHOPS.filter(s => curFilter === 'all' || s.cat.includes(curFilter));
+      document.getElementById('shop-grid').innerHTML = filtered.slice(0, 12).map(s =>
+        `<a href="${buildAffLink(s.url, s.name)}" target="_blank" rel="noopener" class="shop-link">
+          <div class="shop-icon">${s.icon}</div>
+          <span>${s.name}</span>
+          <span class="shop-badge">${s.badge}</span>
+        </a>`
+      ).join('');
+    }
+
+    async function getAdvice() {
+      if (!isPro() && getUsed() >= FREE_LIMIT) {
+        alert('You have used all 3 free reports this month. Please upgrade to Pro for unlimited access.');
+        window.location.href = 'checkout.html';
+        return;
+      }
+      const occ = cv['g-occ'] || '';
+      const style = cv['g-style'] || '';
+      if (!occ && !style) {
+        alert('Please select at least your occasion and style preference.');
+        return;
+      }
+
+      document.getElementById('main-form').style.display = 'none';
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('results').style.display = 'none';
+
+      const profile = `Gender: ${cv['g-gender'] || 'not specified'}
+Age: ${document.getElementById('sa-age').value || 'not specified'}
+Height: ${document.getElementById('ht').value || 'not specified'} cm
+Weight: ${document.getElementById('wt').value || 'not specified'} kg
+Body shape: ${cv['g-body'] || 'not specified'}
+Skin tone: ${skinVal || 'not specified'}
+Hair colour: ${cv['g-hc'] || 'not specified'}
+Hair style: ${cv['g-hs'] || 'not specified'}
+Occasion: ${occ || 'not specified'}
+Style: ${style || 'not specified'}
+Categories: ${[...selCats].join(', ') || 'all'}
+Budget: ${cv['g-budget'] || 'mid-range'}
+Climate: ${cv['g-climate'] || 'Hot & humid'}
+Extra notes: ${document.getElementById('extra').value || 'none'}
+Photo provided: ${photoB64 ? 'YES — analyse visible features from the photo' : 'NO'}`;
+
+      const photoInstruction = photoB64
+        ? 'Study this photo carefully. Note face shape, body proportions, skin tone, hair. Use these observations throughout your advice.'
+        : 'No photo provided. Use the profile details only.';
+
+      const prompt = `You are a world-class personal stylist and fashion consultant. ${photoInstruction}
+
+PROFILE:
+${profile}
+
+Give advice in exactly these 7 sections. Plain text only — no asterisks, no markdown symbols, no bullet dashes. Use line breaks between items.
+
+SECTION 1 — OUTFIT RECOMMENDATION
+Name 2–3 complete outfit combinations. For each: list every piece specifically (e.g. "Dusty rose A-line midi skirt + cream linen blouse + nude block heel sandals"). One sentence explaining WHY it suits their body shape and colouring.
+
+SECTION 2 — YOUR COLOUR PALETTE
+6 best colours with hex codes in brackets. 3 colours to avoid with brief reason for each.
+
+SECTION 3 — FABRICS & FIT TIPS
+4 ideal fabrics for their climate and occasion with reasons. 3 specific fit tips for shopping for their body shape.
+
+SECTION 4 — ACCESSORIES & JEWELLERY
+Jewellery style and metal tone. Bag type and size. Watch style. Sunglasses frame shape. Scarf or dupatta recommendation if relevant.
+
+SECTION 5 — HAIR ACCESSORIES & FOOTWEAR
+2–3 specific hair accessory types for their hair style. Heel height recommendation. Toe shape that suits them. 2–3 specific shoe styles that will look great.
+
+SECTION 6 — WHAT NOT TO BUY — MONEY SAVER
+5 specific clothing items, cuts, patterns or styles to AVOID for their body type or colouring, with a brief reason for each. This helps them stop wasting money.
+
+SECTION 7 — GROOMING & FINISHING TOUCHES
+2 makeup colour tips for their skin tone. 1 fragrance direction. 1 grooming tip.
+
+Be warm, specific and direct. Speak to this person, not about them.`;
+
+      const userContent = photoB64
+        ? [
+            { type: 'image', source: { type: 'base64', media_type: photoType || 'image/jpeg', data: photoB64 } },
+            { type: 'text', text: prompt }
+          ]
+        : [{ type: 'text', text: prompt }];
+
+      try {
+        const res = await fetch('/.netlify/functions/style-advice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 1000,
+            messages: [{ role: 'user', content: userContent }]
+          })
+        });
+
+        // Guard against HTML error pages from Netlify
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          throw new Error('Server error (' + res.status + '). Please try again in a moment.');
+        }
+
+        const data = await res.json();
+
+        // Surface any API-level errors clearly
+        if (!data.content) {
+          const errMsg = data.error?.message || data.error || JSON.stringify(data);
+          throw new Error(errMsg);
+        }
+
+        const text = data.content.map(b => b.text || '').join('');
+
+        const sections = [
+          { n: 1, title: 'Outfit recommendations', icon: 'ti-shirt' },
+          { n: 2, title: 'Your colour palette', icon: 'ti-palette' },
+          { n: 3, title: 'Fabrics & fit tips', icon: 'ti-needle-thread' },
+          { n: 4, title: 'Accessories & jewellery', icon: 'ti-diamond' },
+          { n: 5, title: 'Hair accessories & footwear', icon: 'ti-shoe' },
+          { n: 6, title: 'What NOT to buy — money saver', icon: 'ti-pig-money', warn: true },
+          { n: 7, title: 'Grooming & finishing touches', icon: 'ti-star' },
+        ];
+
+        let html = '';
+        sections.forEach((sec, i) => {
+          const pat = new RegExp('SECTION\\s*' + sec.n + '[^\\n]*\\n([\\s\\S]*?)(?=SECTION\\s*' + (sec.n + 1) + '|$)', 'i');
+          const m = text.match(pat);
+          const body = m ? m[1].trim() : '';
+          if (!body) return;
+          const wrapClass = sec.warn ? ' warn-box' : '';
+          html += `<div class="res-sec${wrapClass}">
+            <h3><i class="ti ${sec.icon}" style="font-size:16px;"></i> ${sec.title}</h3>
+            <div class="res-body">${body}</div>
+          </div><div class="divider"></div>`;
+        });
+
+        if (!html) html = `<div class="res-body">${text}</div>`;
+
+        // Extract first outfit description from Section 1 for image generation
+        const sec1Match = text.match(/SECTION\s*1[^\n]*\n([\s\S]*?)(?=SECTION\s*2|$)/i);
+        const sec1Text  = sec1Match ? sec1Match[1].trim() : '';
+        const firstOutfitLine = sec1Text.split('\n').find(l => l.trim().length > 20) || sec1Text.slice(0, 250);
+        const outfitDesc = firstOutfitLine.replace(/^[\d\.\-\•]+\s*/, '').trim().slice(0, 280);
+
+        // Prepend AI Outfit Visualizer placeholder (filled async below)
+        html = `<div class="res-sec" id="ai-outfit-section">
+          <h3><i class="ti ti-sparkles" style="font-size:16px;"></i> AI Outfit Visualizer</h3>
+          <p style="font-size:12px;color:#888;margin-bottom:12px;">AI-generated outfit on a model matching your body type, skin tone &amp; occasion</p>
+          <div class="inspo-loading" id="ai-outfit-loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="margin-left:6px;">Generating your outfit visuals with Gemini AI…</span></div>
+          <div class="ai-outfit-grid" id="ai-outfit-grid">
+            <div class="ai-outfit-shimmer"></div><div class="ai-outfit-shimmer"></div>
+          </div>
+          <p class="aff-note" style="margin-top:8px;"><i class="ti ti-info-circle" style="font-size:12px;"></i> AI-generated for inspiration. Actual garments may vary.</p>
+        </div><div class="divider"></div>` + html;
+
+        document.getElementById('res-content').innerHTML = html;
+
+        // Generate AI outfit images in the background (non-blocking)
+        generateOutfitImages(outfitDesc);
+
+        incrementUsed();
+        const used = getUsed();
+        if (!isPro() && used >= FREE_LIMIT) {
+          document.getElementById('upsell-banner').style.display = 'flex';
+        }
+
+        renderShops();
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('results').style.display = 'block';
+        goStep(4);
+
+      } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('main-form').style.display = 'block';
+        console.error('Style report error:', e);
+        alert('Something went wrong: ' + (e.message || e));
+      }
+    }
+
+    // Compress photo to max 900px wide JPEG before sending to keep payload small
+    function compressPhoto(base64, mimeType) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX = 900;
+          const ratio = Math.min(1, MAX / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width  = Math.round(img.width  * ratio);
+          canvas.height = Math.round(img.height * ratio);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.82).split(',')[1];
+          resolve({ data: compressed, mime: 'image/jpeg' });
+        };
+        img.onerror = () => resolve({ data: base64, mime: mimeType }); // fallback: use original
+        img.src = `data:${mimeType};base64,${base64}`;
+      });
+    }
+
+    async function generateOutfitImages(outfitDescription) {
+      const grid   = document.getElementById('ai-outfit-grid');
+      const loader = document.getElementById('ai-outfit-loader');
+
+      try {
+        // Build detailed fashion prompt from user's profile
+        const gender = (cv['g-gender'] || 'person').toLowerCase().replace('non-binary', 'person');
+        const shape  = cv['g-body']  ? cv['g-body'].toLowerCase() + ' body type' : '';
+        const skin   = skinVal       ? skinVal.toLowerCase() + ' complexion' : '';
+        const hair   = [cv['g-hc'], cv['g-hs']].filter(Boolean).map(s => s.toLowerCase()).join(' ') + (cv['g-hc'] ? ' hair' : '');
+        const age    = document.getElementById('sa-age').value || '';
+        const occ    = (cv['g-occ'] || 'casual').split('/')[0].trim().toLowerCase();
+        const outfit = outfitDescription || 'stylish contemporary outfit';
+
+        const personDesc = [shape, skin, hair, age].filter(Boolean).join(', ');
+        const prompt = `Professional fashion editorial photograph, full body portrait of a ${gender}${personDesc ? ', ' + personDesc : ''}, wearing ${outfit}, ${occ} occasion, soft studio lighting, clean neutral background, fashion magazine quality, sharp focus, detailed clothing textures, natural confident pose`;
+
+        const seed     = Math.floor(Math.random() * 999999);
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=1024&nologo=true&seed=${seed}`;
+
+        if (loader) loader.style.display = 'none';
+
+        // Pollinations streams the image directly — set as img src, no API key needed
+        grid.innerHTML = `
+          <div class="ai-outfit-img-wrap" style="grid-column:1/-1;max-width:340px;margin:0 auto;">
+            <img
+              src="${imageUrl}"
+              alt="AI generated outfit"
+              onload="this.style.opacity=1"
+              onerror="document.getElementById('ai-outfit-section').style.display='none'"
+              style="opacity:0;transition:opacity 0.5s;"
+            />
+            <span class="ai-badge">✨ AI Generated</span>
+          </div>`;
+
+      } catch (e) {
+        console.warn('AI outfit generation failed:', e.message);
+        const sec = document.getElementById('ai-outfit-section');
+        if (sec) sec.style.display = 'none';
+      }
+    }
+
+    function resetAll() {
+      document.getElementById('results').style.display = 'none';
+      document.getElementById('main-form').style.display = 'block';
+      document.querySelectorAll('.chip').forEach(b => b.classList.remove('on'));
+      document.querySelectorAll('.sw').forEach(s => s.classList.remove('on'));
+      document.getElementById('skin-lbl').textContent = 'Tap a shade';
+      document.getElementById('ht').value = '';
+      document.getElementById('wt').value = '';
+      document.getElementById('sa-age').value = '';
+      document.getElementById('extra').value = '';
+      document.getElementById('photo-preview').style.display = 'none';
+      document.querySelector('.pz-title').textContent = 'Tap to upload your photo';
+      Object.keys(cv).forEach(k => delete cv[k]);
+      skinVal = ''; photoB64 = ''; photoType = '';
+      selCats.clear();
+      goStep(1);
+      initFreeBanner();
+    }
+  </script>
+</body>
+</html>

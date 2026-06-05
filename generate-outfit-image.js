@@ -1,5 +1,5 @@
 // netlify/functions/generate-outfit-image.js
-// MODE 1 (photo uploaded): InstructPix2Pix — edits user's photo to wear the outfit
+// MODE 1 (photo uploaded): InstructPix2Pix — edits user photo to wear the outfit
 // MODE 2 (no photo):       FLUX.1-schnell  — generates a model matching profile
 
 const https = require('https');
@@ -13,7 +13,8 @@ exports.handler = async function (event) {
   let p;
   try { p = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'Bad request' }); }
 
-  const { gender, bodyShape, skinTone, hairColor, hairStyle, ageRange, occasion, outfitDescription, photoBase64, photoMimeType } = p;
+  const { gender, bodyShape, skinTone, hairColor, hairStyle, ageRange,
+          occasion, outfitDescription, photoBase64, photoMimeType } = p;
   const outfit = outfitDescription || 'stylish outfit';
   const occ    = (occasion || 'casual').split('/')[0].trim().toLowerCase();
 
@@ -21,45 +22,40 @@ exports.handler = async function (event) {
     let buf;
 
     if (photoBase64) {
-      // ── MODE 1: Edit user's photo with InstructPix2Pix ───────────────────────
+      // ── MODE 1: InstructPix2Pix — edit user photo ────────────────────────────
       console.log('Mode: InstructPix2Pix (user photo)');
-      const instruction = `Change this person's outfit to: ${outfit}. Keep their face, hair, skin tone and body shape exactly the same. Only change the clothing and shoes.`;
-      buf = await callHuggingFace(
-        token,
-        '/hf-inference/models/timbrooks/instruct-pix2pix',
-        JSON.stringify({
-          inputs: photoBase64,
-          parameters: {
-            prompt: instruction,
-            image_guidance_scale: 1.8,
-            guidance_scale: 8,
-            num_inference_steps: 25,
-          }
-        })
-      );
-    } else {
-      // ── MODE 2: Text-to-image with FLUX ──────────────────────────────────────
-      console.log('Mode: FLUX text-to-image (no photo)');
-      const g      = (gender    || 'person').toLowerCase().replace('non-binary', 'person');
-      const shape  = bodyShape  ? bodyShape.toLowerCase() + ' body type' : '';
-      const skin   = skinTone   ? skinTone.toLowerCase() + ' skin' : '';
-      const hair   = [hairColor, hairStyle].filter(Boolean).map(s => s.toLowerCase()).join(' ') + (hairColor ? ' hair' : '');
-      const age    = ageRange   || '';
-      const desc   = [shape, skin, hair, age].filter(Boolean).join(', ');
-      const prompt = `Fashion editorial photograph, full body portrait of a ${g}${desc ? ', ' + desc : ''}, wearing ${outfit}, ${occ} occasion, studio lighting, clean background, high quality`.replace(/\s+/g, ' ').trim();
+      const instruction = `Change this person's outfit to: ${outfit}. Keep their face, hair colour, skin tone and body shape exactly the same. Only change the clothing and shoes.`;
+      const mimeType    = photoMimeType || 'image/jpeg';
+      const dataUri     = `data:${mimeType};base64,${photoBase64}`;
 
-      buf = await callHuggingFace(
-        token,
-        '/hf-inference/models/black-forest-labs/FLUX.1-schnell',
-        JSON.stringify({ inputs: prompt })
-      );
+      const body = JSON.stringify({
+        inputs: dataUri,
+        parameters: {
+          prompt: instruction,
+          image_guidance_scale: 1.5,
+          guidance_scale: 7,
+          num_inference_steps: 20,
+        }
+      });
+
+      buf = await callHF(token, '/hf-inference/models/timbrooks/instruct-pix2pix', body);
+
+      // If HF returns an error JSON, fall back to FLUX
+      if (buf[0] === 123) {
+        const errText = buf.toString('utf8').slice(0, 300);
+        console.warn('InstructPix2Pix failed, falling back to FLUX:', errText);
+        buf = await generateFlux(token, { gender, bodyShape, skinTone, hairColor, hairStyle, ageRange, occ, outfit });
+      }
+
+    } else {
+      // ── MODE 2: FLUX text-to-image ────────────────────────────────────────────
+      console.log('Mode: FLUX text-to-image (no photo)');
+      buf = await generateFlux(token, { gender, bodyShape, skinTone, hairColor, hairStyle, ageRange, occ, outfit });
     }
 
-    // Detect JSON error response (starts with '{')
+    // Final JSON check
     if (buf[0] === 123) {
-      const msg = buf.toString('utf8').slice(0, 300);
-      console.error('HF returned JSON instead of image:', msg);
-      return json(502, { error: msg });
+      return json(502, { error: buf.toString('utf8').slice(0, 300) });
     }
 
     return json(200, { images: [{ base64: buf.toString('base64'), mimeType: 'image/jpeg' }] });
@@ -70,11 +66,26 @@ exports.handler = async function (event) {
   }
 };
 
-// ── Shared HuggingFace caller ─────────────────────────────────────────────────
+// ── FLUX text-to-image ────────────────────────────────────────────────────────
 
-function callHuggingFace(token, path, body) {
+async function generateFlux(token, { gender, bodyShape, skinTone, hairColor, hairStyle, ageRange, occ, outfit }) {
+  const g     = (gender    || 'person').toLowerCase().replace('non-binary', 'person');
+  const shape = bodyShape  ? bodyShape.toLowerCase() + ' body type' : '';
+  const skin  = skinTone   ? skinTone.toLowerCase() + ' skin' : '';
+  const hair  = [hairColor, hairStyle].filter(Boolean).map(s => s.toLowerCase()).join(' ') + (hairColor ? ' hair' : '');
+  const age   = ageRange   || '';
+  const desc  = [shape, skin, hair, age].filter(Boolean).join(', ');
+  const prompt = `Fashion editorial photograph, full body portrait of a ${g}${desc ? ', ' + desc : ''}, wearing ${outfit}, ${occ} occasion, studio lighting, clean background, high quality`.replace(/\s+/g, ' ').trim();
+
+  return callHF(token, '/hf-inference/models/black-forest-labs/FLUX.1-schnell',
+    JSON.stringify({ inputs: prompt }));
+}
+
+// ── Shared HuggingFace HTTP caller ────────────────────────────────────────────
+
+function callHF(token, path, body) {
   return new Promise((resolve, reject) => {
-    const options = {
+    const opts = {
       hostname: 'router.huggingface.co',
       path,
       method: 'POST',
@@ -82,9 +93,10 @@ function callHuggingFace(token, path, body) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(body),
+        'X-Wait-For-Model': 'true',
       },
     };
-    const req = https.request(options, res => {
+    const req = https.request(opts, res => {
       const chunks = [];
       res.on('data', d => chunks.push(d));
       res.on('end', () => resolve(Buffer.concat(chunks)));

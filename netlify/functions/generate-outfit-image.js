@@ -1,116 +1,31 @@
-// netlify/functions/generate-outfit-image.js
-// Uses Together AI FLUX.1 for high-quality AI fashion image generation.
-// TOGETHER_API_KEY must be set in Netlify environment variables.
-// Free key at: https://api.together.ai (sign up → API Keys)
-
 const https = require('https');
-
-exports.handler = async function (event) {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
-
-  const apiKey = process.env.TOGETHER_API_KEY;
-  if (!apiKey) {
-    console.error('TOGETHER_API_KEY is not set');
-    return json(500, { error: 'Together AI key not configured. Add TOGETHER_API_KEY to Netlify env vars.' });
-  }
-
-  let payload;
+exports.handler = async function(event) {
+  if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
+  let p;
+  try { p = JSON.parse(event.body || '{}'); } catch { return { statusCode: 400, body: 'Bad request' }; }
+  const g = (p.gender || 'person').toLowerCase();
+  const shape = p.bodyShape || '';
+  const skin = p.skinTone || '';
+  const occ = (p.occasion || 'casual').split('/')[0].trim().toLowerCase();
+  const outfit = p.outfitDescription || 'stylish outfit';
+  const prompt = `Fashion editorial photograph, full body portrait of a ${g}${shape ? ', ' + shape : ''}${skin ? ', ' + skin + ' skin' : ''}, wearing ${outfit}, ${occ} occasion, studio lighting, clean background, high quality`.replace(/\s+/g, ' ').trim();
+  const seed = Math.floor(Math.random() * 999999);
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=1024&nologo=true&seed=${seed}`;
   try {
-    payload = JSON.parse(event.body || '{}');
-  } catch {
-    return json(400, { error: 'Invalid request body.' });
-  }
-
-  const prompt = buildPrompt(payload);
-  console.log('FLUX prompt:', prompt.slice(0, 180));
-
-  try {
-    const images = await generateWithFlux(apiKey, prompt);
-    return json(200, { images });
-  } catch (err) {
-    console.error('FLUX error:', err.message);
-    return json(502, { error: err.message });
+    const buf = await new Promise((resolve, reject) => {
+      function get(u, r) {
+        https.get(u, res => {
+          if ((res.statusCode === 301 || res.statusCode === 302) && r > 0) return get(res.headers.location, r - 1);
+          const c = [];
+          res.on('data', d => c.push(d));
+          res.on('end', () => resolve(Buffer.concat(c)));
+          res.on('error', reject);
+        }).on('error', reject);
+      }
+      get(url, 3);
+    });
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ images: [{ base64: buf.toString('base64'), mimeType: 'image/jpeg' }] }) };
+  } catch (e) {
+    return { statusCode: 502, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: e.message }) };
   }
 };
-
-// ── Prompt builder ────────────────────────────────────────────────────────────
-
-function buildPrompt({ gender, bodyShape, skinTone, hairColor, hairStyle, ageRange, occasion, outfitDescription }) {
-  const g      = (gender    || 'person').toLowerCase().replace('non-binary', 'person');
-  const shape  = bodyShape  ? `${bodyShape.toLowerCase()} body type` : '';
-  const skin   = skinTone   ? `${skinTone.toLowerCase()} complexion` : '';
-  const hair   = [hairColor, hairStyle].filter(Boolean).map(s => s.toLowerCase()).join(' ') + (hairColor ? ' hair' : '');
-  const age    = ageRange   || '';
-  const occ    = (occasion  || 'casual').split('/')[0].trim().toLowerCase();
-  const outfit = outfitDescription || 'stylish contemporary outfit';
-
-  const personDesc = [g, shape, skin, hair, age].filter(Boolean).join(', ');
-
-  return [
-    'Professional fashion editorial photograph,',
-    `full body portrait of a ${personDesc},`,
-    `wearing ${outfit},`,
-    `${occ} occasion,`,
-    'soft studio lighting, clean neutral background,',
-    'fashion magazine quality, sharp focus, detailed clothing textures, natural confident pose.',
-  ].join(' ').replace(/\s+/g, ' ').trim();
-}
-
-// ── Together AI FLUX.1 call ───────────────────────────────────────────────────
-
-function generateWithFlux(apiKey, prompt) {
-  return new Promise((resolve, reject) => {
-    const requestBody = JSON.stringify({
-      model: 'black-forest-labs/FLUX.1-schnell-Free',
-      prompt,
-      width: 768,
-      height: 1024,
-      steps: 4,
-      n: 1,
-      response_format: 'base64',
-    });
-
-    const options = {
-      hostname: 'api.together.xyz',
-      path: '/v1/images/generations',
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(requestBody),
-      },
-    };
-
-    const req = https.request(options, (res) => {
-      let body = '';
-      res.on('data', (chunk) => { body += chunk; });
-      res.on('end', () => {
-        try {
-          const data = JSON.parse(body);
-          if (data.data && data.data.length > 0 && data.data[0].b64_json) {
-            resolve([{ base64: data.data[0].b64_json, mimeType: 'image/jpeg' }]);
-          } else {
-            const errMsg = data.error?.message || JSON.stringify(data).slice(0, 300);
-            reject(new Error(errMsg));
-          }
-        } catch {
-          reject(new Error('Non-JSON response from Together AI'));
-        }
-      });
-    });
-
-    req.on('error', reject);
-    req.write(requestBody);
-    req.end();
-  });
-}
-
-function json(statusCode, data) {
-  return {
-    statusCode,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  };
-}
